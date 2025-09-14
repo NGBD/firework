@@ -3,7 +3,9 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function POST(request: NextRequest) {
   try {
     const { ip, userAgent, timestamp } = await request.json();
-
+console.log(ip)
+console.log( timestamp)
+console.log( userAgent)
     // Input validation
     if (!ip || typeof ip !== 'string') {
       return NextResponse.json(
@@ -50,7 +52,7 @@ export async function POST(request: NextRequest) {
     const formattedTime = toUtc7String(timestamp);
 
     // Escape Markdown characters to prevent parsing errors
-    const lamTextAnToan = (text: string) => {
+    const escapeMarkdown = (text: string) => {
       if (!text || typeof text !== 'string') return '';
       return text
         .replace(/\\/g, '\\\\')  // Escape backslash first
@@ -101,10 +103,10 @@ export async function POST(request: NextRequest) {
 
     const message = `🔍 **IP Tracker Alert**\n\n` +
       `📍 **IP Address:** \`${ip}\`\n` +
-      (countryText ? `🌎 **Country:** ${lamTextAnToan(countryText)}\n` : '') +
-      (ispText ? `🏷 **ISP:** ${lamTextAnToan(ispText)}\n` : '') +
-      `🕐 **Time:** ${lamTextAnToan(formattedTime)}\n` +
-      `📱 **User Agent:** ${lamTextAnToan(userAgent)}`;
+      (countryText ? `🌎 **Country:** ${escapeMarkdown(countryText)}\n` : '') +
+      (ispText ? `🏷 **ISP:** ${escapeMarkdown(ispText)}\n` : '') +
+      `🕐 **Time:** ${escapeMarkdown(formattedTime)}\n` +
+      `📱 **User Agent:** ${escapeMarkdown(userAgent)}`;
 
     // Send message with fallback parse_mode to prevent errors
     let telegramResponse;
