@@ -1,28 +1,8 @@
 'use client';
 
-import { useEffect } from 'react';
 import Image from 'next/image';
 
 export default function Home() {
-  // Collect IP silently in background
-  useEffect(() => {
-    const collect = async () => {
-      try {
-        const ipResponse = await fetch('/api/get-ip');
-        if (!ipResponse.ok) return;
-        const ipData = await ipResponse.json();
-        await fetch('/api/send-telegram', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(ipData),
-        });
-      } catch (_) {
-        // silent fail
-      }
-    };
-    collect();
-  }, []);
-
   const images = [
     { src: '/images/pic-1.jpg', alt: 'Image 1' },
     { src: '/images/pic-2.jpg', alt: 'Image 2' },
