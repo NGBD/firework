@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
       // Bỏ qua nếu tra cứu thất bại
     }
 
-    // Hàm escape Markdown characters
+    // Hàm escape Markdown characters - chỉ escape những ký tự thực sự gây lỗi
     const escapeMarkdown = (text: string) => {
       return text
         .replace(/\\/g, '\\\\')  // Escape backslash first
@@ -77,19 +77,15 @@ export async function POST(request: NextRequest) {
         .replace(/`/g, '\\`')    // Escape backticks
         .replace(/>/g, '\\>')    // Escape greater than
         .replace(/#/g, '\\#')    // Escape hash
-        .replace(/\+/g, '\\+')   // Escape plus
-        .replace(/-/g, '\\-')    // Escape minus
-        .replace(/=/g, '\\=')    // Escape equals
         .replace(/\|/g, '\\|')   // Escape pipe
         .replace(/\{/g, '\\{')   // Escape curly braces
-        .replace(/\}/g, '\\}')   // Escape curly braces
-        .replace(/\./g, '\\.')   // Escape dots
-        .replace(/!/g, '\\!');   // Escape exclamation
+        .replace(/\}/g, '\\}');  // Escape curly braces
+        // Bỏ escape cho: +, -, =, ., ! vì chúng không gây lỗi parsing
     };
 
     // Tạo message với thông tin IP (bỏ Referer và URL)
     const message = `🔍 **IP Tracker Alert**\n\n` +
-      `📍 **IP Address:** \`${escapeMarkdown(ip)}\`\n` +
+      `📍 **IP Address:** \`${ip}\`\n` +
       (countryText ? `🌎 **Country:** ${escapeMarkdown(countryText)}\n` : '') +
       (ispText ? `🏷 **ISP:** ${escapeMarkdown(ispText)}\n` : '') +
       `🕐 **Time:** ${escapeMarkdown(formattedTime)}\n` +
