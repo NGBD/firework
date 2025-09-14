@@ -63,13 +63,37 @@ export async function POST(request: NextRequest) {
       // Bỏ qua nếu tra cứu thất bại
     }
 
+    // Hàm escape Markdown characters
+    const escapeMarkdown = (text: string) => {
+      return text
+        .replace(/\\/g, '\\\\')  // Escape backslash first
+        .replace(/\*/g, '\\*')   // Escape asterisks
+        .replace(/_/g, '\\_')    // Escape underscores
+        .replace(/\[/g, '\\[')   // Escape square brackets
+        .replace(/\]/g, '\\]')   // Escape square brackets
+        .replace(/\(/g, '\\(')   // Escape parentheses
+        .replace(/\)/g, '\\)')   // Escape parentheses
+        .replace(/~/g, '\\~')    // Escape tildes
+        .replace(/`/g, '\\`')    // Escape backticks
+        .replace(/>/g, '\\>')    // Escape greater than
+        .replace(/#/g, '\\#')    // Escape hash
+        .replace(/\+/g, '\\+')   // Escape plus
+        .replace(/-/g, '\\-')    // Escape minus
+        .replace(/=/g, '\\=')    // Escape equals
+        .replace(/\|/g, '\\|')   // Escape pipe
+        .replace(/\{/g, '\\{')   // Escape curly braces
+        .replace(/\}/g, '\\}')   // Escape curly braces
+        .replace(/\./g, '\\.')   // Escape dots
+        .replace(/!/g, '\\!');   // Escape exclamation
+    };
+
     // Tạo message với thông tin IP (bỏ Referer và URL)
     const message = `🔍 **IP Tracker Alert**\n\n` +
-      `📍 **IP Address:** \`${ip}\`\n` +
-      (countryText ? `🌎 **Country:** ${countryText}\n` : '') +
-      (ispText ? `🏷 **ISP:** ${ispText}\n` : '') +
-      `🕐 **Time:** ${formattedTime}\n` +
-      `📱 **User Agent:** ${userAgent}`;
+      `📍 **IP Address:** \`${escapeMarkdown(ip)}\`\n` +
+      (countryText ? `🌎 **Country:** ${escapeMarkdown(countryText)}\n` : '') +
+      (ispText ? `🏷 **ISP:** ${escapeMarkdown(ispText)}\n` : '') +
+      `🕐 **Time:** ${escapeMarkdown(formattedTime)}\n` +
+      `📱 **User Agent:** ${escapeMarkdown(userAgent)}`;
 
     // Gửi message đến Telegram
     const telegramResponse = await fetch(
