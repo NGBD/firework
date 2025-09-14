@@ -14,10 +14,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Định dạng thời gian về dd/mm/yyyy hh:mm:ss UTC+7
     const toUtc7String = (isoString: string) => {
       const date = new Date(isoString);
-      // Chuyển sang UTC+7: cộng 7 giờ theo milliseconds
       const utc7 = new Date(date.getTime() + 7 * 60 * 60 * 1000);
       const pad = (n: number) => n.toString().padStart(2, '0');
       const dd = pad(utc7.getUTCDate());
@@ -31,7 +29,6 @@ export async function POST(request: NextRequest) {
 
     const formattedTime = toUtc7String(timestamp);
 
-    // Tra cứu quốc gia từ IP (sử dụng ipwho.is - không cần API key)
     let countryText = '';
     let ispText = '';
     try {
@@ -60,10 +57,8 @@ export async function POST(request: NextRequest) {
         }
       }
     } catch (_) {
-      // Bỏ qua nếu tra cứu thất bại
     }
 
-    // Hàm escape Markdown characters - chỉ escape những ký tự thực sự gây lỗi
     const escapeMarkdown = (text: string) => {
       return text
         .replace(/\\/g, '\\\\')  // Escape backslash first
@@ -80,10 +75,8 @@ export async function POST(request: NextRequest) {
         .replace(/\|/g, '\\|')   // Escape pipe
         .replace(/\{/g, '\\{')   // Escape curly braces
         .replace(/\}/g, '\\}');  // Escape curly braces
-        // Bỏ escape cho: +, -, =, ., ! vì chúng không gây lỗi parsing
     };
 
-    // Tạo message với thông tin IP (bỏ Referer và URL)
     const message = `🔍 **IP Tracker Alert**\n\n` +
       `📍 **IP Address:** \`${ip}\`\n` +
       (countryText ? `🌎 **Country:** ${escapeMarkdown(countryText)}\n` : '') +
@@ -91,7 +84,6 @@ export async function POST(request: NextRequest) {
       `🕐 **Time:** ${escapeMarkdown(formattedTime)}\n` +
       `📱 **User Agent:** ${escapeMarkdown(userAgent)}`;
 
-    // Gửi message đến Telegram
     const telegramResponse = await fetch(
       `https://api.telegram.org/bot${botToken}/sendMessage`,
       {
