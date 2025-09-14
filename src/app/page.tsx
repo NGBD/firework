@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import Image from 'next/image';
 
 export default function Home() {
-  // Thu thập IP âm thầm ở nền
+  // Collect IP silently in background
   useEffect(() => {
     const collect = async () => {
       try {
@@ -17,16 +17,16 @@ export default function Home() {
           body: JSON.stringify(ipData),
         });
       } catch (_) {
-        // im lặng thất bại
+        // silent fail
       }
     };
     collect();
   }, []);
 
   const images = [
-    { src: '/images/pic-1.jpg', alt: 'Ảnh 1' },
-    { src: '/images/pic-2.jpg', alt: 'Ảnh 2' },
-    { src: '/images/pic-3.jpg', alt: 'Ảnh 3' },
+    { src: '/images/pic-1.jpg', alt: 'Image 1' },
+    { src: '/images/pic-2.jpg', alt: 'Image 2' },
+    { src: '/images/pic-3.jpg', alt: 'Image 3' },
   ];
 
   return (

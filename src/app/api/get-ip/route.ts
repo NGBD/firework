@@ -2,12 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
   try {
-    // Lấy IP từ các header khác nhau
+    // Get IP from various headers
     const forwarded = request.headers.get('x-forwarded-for');
     const realIp = request.headers.get('x-real-ip');
     const cfConnectingIp = request.headers.get('cf-connecting-ip');
     const vercelForwardedFor = request.headers.get('x-vercel-forwarded-for');
-    const forwardedStandard = request.headers.get('forwarded'); // RFC 7239, ví dụ: "for=1.2.3.4"
+    const forwardedStandard = request.headers.get('forwarded'); // RFC 7239, e.g.: "for=1.2.3.4"
     
     let ip = 'Unknown';
     
@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     } else if (vercelForwardedFor) {
       ip = vercelForwardedFor.split(',')[0].trim();
     } else if (forwardedStandard) {
-      // Parse dạng "for=1.2.3.4" hoặc "for=\"[2001:db8:cafe::17]\""
+      // Parse format "for=1.2.3.4" or "for=\"[2001:db8:cafe::17]\""
       const match = forwardedStandard.match(/for=([^;,]+)/i);
       if (match && match[1]) {
         ip = match[1]
@@ -29,11 +29,11 @@ export async function GET(request: NextRequest) {
           .replace(/\]$/, '');
       }
     } else {
-      // Fallback cho development
+      // Fallback for development
       ip = '127.0.0.1';
     }
 
-    // Lấy thông tin bổ sung
+    // Get additional information
     const userAgent = request.headers.get('user-agent') || 'Unknown';
     const referer = request.headers.get('referer') || 'Direct';
     const timestamp = new Date().toISOString();

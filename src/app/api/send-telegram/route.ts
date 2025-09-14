@@ -4,6 +4,26 @@ export async function POST(request: NextRequest) {
   try {
     const { ip, userAgent, timestamp } = await request.json();
 
+    // Input validation
+    if (!ip || typeof ip !== 'string') {
+      return NextResponse.json(
+        { error: 'Invalid IP address' },
+        { status: 400 }
+      );
+    }
+    if (!userAgent || typeof userAgent !== 'string') {
+      return NextResponse.json(
+        { error: 'Invalid User Agent' },
+        { status: 400 }
+      );
+    }
+    if (!timestamp || typeof timestamp !== 'string') {
+      return NextResponse.json(
+        { error: 'Invalid timestamp' },
+        { status: 400 }
+      );
+    }
+
     const botToken = process.env.TELEGRAM_BOT_TOKEN;
     const chatId = process.env.TELEGRAM_CHAT_ID;
 
@@ -28,6 +48,26 @@ export async function POST(request: NextRequest) {
     };
 
     const formattedTime = toUtc7String(timestamp);
+
+    // Escape Markdown characters to prevent parsing errors
+    const lamTextAnToan = (text: string) => {
+      if (!text || typeof text !== 'string') return '';
+      return text
+        .replace(/\\/g, '\\\\')  // Escape backslash first
+        .replace(/\*/g, '\\*')   // Escape asterisks
+        .replace(/_/g, '\\_')    // Escape underscores
+        .replace(/\[/g, '\\[')   // Escape square brackets
+        .replace(/\]/g, '\\]')   // Escape square brackets
+        .replace(/\(/g, '\\(')   // Escape parentheses
+        .replace(/\)/g, '\\)')   // Escape parentheses
+        .replace(/~/g, '\\~')    // Escape tildes
+        .replace(/`/g, '\\`')    // Escape backticks
+        .replace(/>/g, '\\>')    // Escape greater than
+        .replace(/#/g, '\\#')    // Escape hash
+        .replace(/\|/g, '\\|')   // Escape pipe
+        .replace(/\{/g, '\\{')   // Escape curly braces
+        .replace(/\}/g, '\\}');  // Escape curly braces
+    };
 
     let countryText = '';
     let ispText = '';
@@ -59,45 +99,57 @@ export async function POST(request: NextRequest) {
     } catch (_) {
     }
 
-    const escapeMarkdown = (text: string) => {
-      return text
-        .replace(/\\/g, '\\\\')  // Escape backslash first
-        .replace(/\*/g, '\\*')   // Escape asterisks
-        .replace(/_/g, '\\_')    // Escape underscores
-        .replace(/\[/g, '\\[')   // Escape square brackets
-        .replace(/\]/g, '\\]')   // Escape square brackets
-        .replace(/\(/g, '\\(')   // Escape parentheses
-        .replace(/\)/g, '\\)')   // Escape parentheses
-        .replace(/~/g, '\\~')    // Escape tildes
-        .replace(/`/g, '\\`')    // Escape backticks
-        .replace(/>/g, '\\>')    // Escape greater than
-        .replace(/#/g, '\\#')    // Escape hash
-        .replace(/\|/g, '\\|')   // Escape pipe
-        .replace(/\{/g, '\\{')   // Escape curly braces
-        .replace(/\}/g, '\\}');  // Escape curly braces
-    };
-
     const message = `🔍 **IP Tracker Alert**\n\n` +
       `📍 **IP Address:** \`${ip}\`\n` +
-      (countryText ? `🌎 **Country:** ${escapeMarkdown(countryText)}\n` : '') +
-      (ispText ? `🏷 **ISP:** ${escapeMarkdown(ispText)}\n` : '') +
-      `🕐 **Time:** ${escapeMarkdown(formattedTime)}\n` +
-      `📱 **User Agent:** ${escapeMarkdown(userAgent)}`;
+      (countryText ? `🌎 **Country:** ${lamTextAnToan(countryText)}\n` : '') +
+      (ispText ? `🏷 **ISP:** ${lamTextAnToan(ispText)}\n` : '') +
+      `🕐 **Time:** ${lamTextAnToan(formattedTime)}\n` +
+      `📱 **User Agent:** ${lamTextAnToan(userAgent)}`;
 
-    const telegramResponse = await fetch(
-      `https://api.telegram.org/bot${botToken}/sendMessage`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          chat_id: chatId,
-          text: message,
-          parse_mode: 'Markdown',
-        }),
+    // Send message with fallback parse_mode to prevent errors
+    let telegramResponse;
+    try {
+      // Try sending with Markdown first
+      telegramResponse = await fetch(
+        `https://api.telegram.org/bot${botToken}/sendMessage`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text: message,
+            parse_mode: 'Markdown',
+          }),
+        }
+      );
+
+      // If Markdown fails, retry without parse_mode
+      if (!telegramResponse.ok) {
+        const errorData = await telegramResponse.json();
+        if (errorData.error_code === 400 && errorData.description.includes('parse entities')) {
+          console.log('Markdown parsing failed, retrying without parse_mode...');
+          telegramResponse = await fetch(
+            `https://api.telegram.org/bot${botToken}/sendMessage`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                chat_id: chatId,
+                text: message.replace(/\*\*/g, '').replace(/\*/g, '').replace(/`/g, ''), // Remove Markdown syntax
+                parse_mode: undefined,
+              }),
+            }
+          );
+        }
       }
-    );
+    } catch (error) {
+      console.error('Error in Telegram request:', error);
+      throw error;
+    }
 
     if (!telegramResponse.ok) {
       const errorData = await telegramResponse.json();
